@@ -1,0 +1,30 @@
+steps:
+  # Grant execute permissions to scripts
+  - name: "gcr.io/cloud-builders/git"
+    args: ["update-index", "--chmod=+x", "cli.py"]
+
+  # Configure Docker credentials
+  - name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        gcloud auth configure-docker ${_LOCATION}-docker.pkg.dev
+
+  # Run make deploy
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "make"
+    args: ["deploy"]
+    env:
+      - "PROJECT_ID=$PROJECT_ID"
+      - "LOCATION=${_LOCATION}"
+      - "GITHUB_TOKEN=${_GITHUB_TOKEN}"
+
+substitutions:
+  _LOCATION: us-central1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Grant access to Artifact Registry
+serviceAccount: "projects/$PROJECT_ID/serviceAccounts/cloud-builder@${PROJECT_ID}.iam.gserviceaccount.com"
