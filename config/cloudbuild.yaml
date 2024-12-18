@@ -51,7 +51,7 @@ steps:
     waitFor: ["bump-version"]
 
   # Run make deploy with new version
-  - name: "gcr.io/cloud-builders/docker"
+  - name: "gcr.io/cloud-builders/docker-gcloud"
     entrypoint: "make"
     args: ["deploy"]
     secretEnv: ["GITHUB_TOKEN"]
