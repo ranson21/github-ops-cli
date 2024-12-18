@@ -50,10 +50,16 @@ steps:
     id: "configure-docker"
     waitFor: ["bump-version"]
 
-  # Run make deploy with new version
-  - name: "gcr.io/cloud-builders/docker-gcloud"
-    entrypoint: "make"
-    args: ["deploy"]
+    # Run make deploy with new version
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        # Install Docker
+        apt-get update && apt-get install -y docker.io
+        # Run make deploy
+        make deploy
     secretEnv: ["GITHUB_TOKEN"]
     env:
       - "PROJECT_ID=$PROJECT_ID"
