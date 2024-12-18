@@ -133,8 +133,19 @@ class GitHubOps:
             print("Falling back to v0.0.0 with timestamp")
             return f"v0.0.0-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    def create_release(self, version: str, is_draft: bool = False) -> int:
-        """Create a new GitHub release and upload assets."""
+    def create_release(
+        self, version: str, is_draft: bool = False, skip_asset: bool = False
+    ) -> int:
+        """Create a new GitHub release and optionally upload assets.
+
+        Args:
+            version (str): The version tag for the release
+            is_draft (bool): Whether to create as a draft release
+            skip_asset (bool): Whether to skip creating and uploading the release asset
+
+        Returns:
+            int: The release ID
+        """
         # Create the release first
         url = f"{self.api_base}/repos/{self.repo_owner}/{self.repo_name}/releases"
         data = {
@@ -149,18 +160,19 @@ class GitHubOps:
         response.raise_for_status()
         release_id = response.json()["id"]
 
-        # Upload the release asset
-        try:
-            print("Uploading release.tar.gz to release")
-            self.upload_release_asset(
-                release_id=release_id,
-                file_path="release.tar.gz",
-                file_name="release.tar.gz",
-            )
-            print("Successfully uploaded release.tar.gz")
-        except Exception as e:
-            print(f"Error uploading release asset: {str(e)}")
-            raise
+        # Upload the release asset if not skipped
+        if not skip_asset:
+            try:
+                print("Uploading release.tar.gz to release")
+                self.upload_release_asset(
+                    release_id=release_id,
+                    file_path="release.tar.gz",
+                    file_name="release.tar.gz",
+                )
+                print("Successfully uploaded release.tar.gz")
+            except Exception as e:
+                print(f"Error uploading release asset: {str(e)}")
+                raise
 
         return release_id
 
