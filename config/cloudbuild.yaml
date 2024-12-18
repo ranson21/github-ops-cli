@@ -47,6 +47,7 @@ steps:
       - "-c"
       - |
         gcloud auth configure-docker ${_LOCATION}-docker.pkg.dev
+    id: "configure-docker"
     waitFor: ["bump-version"]
 
   # Run make deploy with new version
@@ -58,7 +59,8 @@ steps:
       - "PROJECT_ID=$PROJECT_ID"
       - "LOCATION=${_LOCATION}"
       - "BUILDER_TAG=$$(cat new_version.txt)"
-    waitFor: ["bump-version"]
+    id: "deploy"
+    waitFor: ["configure-docker"]
 
   # Create GitHub release
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
