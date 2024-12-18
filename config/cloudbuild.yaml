@@ -70,32 +70,6 @@ steps:
     id: "deploy"
     waitFor: ["configure-docker"]
 
-  # Create GitHub release
-  - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        echo "Content of new_version.txt: $(cat new_version.txt)"
-        VERSION=$(cat new_version.txt)
-        if [[ "${_IS_MERGE}" != "true" ]]; then
-          python /usr/local/bin/cli.py \
-            --action create-release \
-            --repo-owner ${_REPO_OWNER} \
-            --repo-name github-ops-cli \
-            --current-version "$${VERSION}" \
-            --is-draft
-        else
-          python /usr/local/bin/cli.py \
-            --action create-release \
-            --repo-owner ${_REPO_OWNER} \
-            --repo-name github-ops-cli \
-            --current-version "$${VERSION}"
-        fi
-    secretEnv: ["GITHUB_TOKEN"]
-    id: "create-release"
-    waitFor: ["deploy"]
-
   # Update parent repo submodule
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
     args:
@@ -117,7 +91,7 @@ steps:
       ]
     secretEnv: ["GITHUB_TOKEN"]
     id: "update-submodule"
-    waitFor: ["create-release"]
+    waitFor: ["deploy"]
 
 substitutions:
   _LOCATION: us-central1
