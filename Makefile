@@ -36,12 +36,11 @@ copy-files: setup
 	@cp Dockerfile builders/github-ops/
 	@cp requirements.txt builders/github-ops/
 
-# Build the Docker image
 .PHONY: build
 build: copy-files
 	@echo "Building Docker image..."
 	@cd builders/github-ops && docker build -t $(BUILDER_IMAGE_LATEST) .
-	@if [ "$(BUILDER_TAG)" != "latest" ]; then \
+	@if [ "$(BUILDER_TAG)" != "latest" ] && [ -n "$(BUILDER_TAG)" ]; then \
 		echo "Tagging version $(BUILDER_TAG)..."; \
 		docker tag $(BUILDER_IMAGE_LATEST) $(LOCATION)-docker.pkg.dev/$(PROJECT_ID)/docker/$(BUILDER_NAME):$(BUILDER_TAG); \
 	fi
