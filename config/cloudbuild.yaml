@@ -1,7 +1,44 @@
 steps:
-  # Grant execute permissions to scripts
-  - name: "gcr.io/cloud-builders/git"
-    args: ["update-index", "--chmod=+x", "cli.py"]
+  # Get latest version
+  - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
+    args:
+      [
+        "--action",
+        "get-version",
+        "--repo-owner",
+        "${_REPO_OWNER}",
+        "--repo-name",
+        "github-ops-cli",
+      ]
+    secretEnv: ["GITHUB_TOKEN"]
+    id: "get-version"
+
+  # Process PR info and bump version
+  - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        echo "Debug environment variables:"
+        echo "PR_TYPE value: ${_PR_TYPE}"
+        echo "IS_MERGE value: ${_IS_MERGE}"
+
+        VERSION_TYPE="${_PR_TYPE}"
+        if [ -z "${_PR_TYPE}" ]; then
+          VERSION_TYPE="timestamp"
+        fi
+
+        python /usr/local/bin/cli.py \
+          --action bump-version \
+          --repo-owner ${_REPO_OWNER} \
+          --repo-name github-ops-cli \
+          --current-version "$$(cat current_version.txt)" \
+          --version-type "$${VERSION_TYPE}" \
+          --is-merge "${_IS_MERGE}" \
+          --pr-number "${_PR_NUMBER}"
+    secretEnv: ["GITHUB_TOKEN"]
+    id: "bump-version"
+    waitFor: ["get-version"]
 
   # Configure Docker credentials
   - name: "gcr.io/cloud-builders/gcloud"
@@ -10,21 +47,83 @@ steps:
       - "-c"
       - |
         gcloud auth configure-docker ${_LOCATION}-docker.pkg.dev
+    waitFor: ["bump-version"]
 
-  # Run make deploy
+  # Run make deploy with new version
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "make"
     args: ["deploy"]
+    secretEnv: ["GITHUB_TOKEN"]
     env:
       - "PROJECT_ID=$PROJECT_ID"
       - "LOCATION=${_LOCATION}"
-      - "GITHUB_TOKEN=${_GITHUB_TOKEN}"
+      - "BUILDER_TAG=$$(cat new_version.txt)"
+    waitFor: ["bump-version"]
+
+  # Create GitHub release
+  - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        echo "Content of new_version.txt: $(cat new_version.txt)"
+        VERSION=$(cat new_version.txt)
+        if [[ "${_IS_MERGE}" != "true" ]]; then
+          python /usr/local/bin/cli.py \
+            --action create-release \
+            --repo-owner ${_REPO_OWNER} \
+            --repo-name github-ops-cli \
+            --current-version "$${VERSION}" \
+            --is-draft
+        else
+          python /usr/local/bin/cli.py \
+            --action create-release \
+            --repo-owner ${_REPO_OWNER} \
+            --repo-name github-ops-cli \
+            --current-version "$${VERSION}"
+        fi
+    secretEnv: ["GITHUB_TOKEN"]
+    id: "create-release"
+    waitFor: ["deploy"]
+
+  # Update parent repo submodule
+  - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
+    args:
+      [
+        "--action",
+        "update-submodule",
+        "--repo-owner",
+        "${_REPO_OWNER}",
+        "--repo-name",
+        "github-ops-cli",
+        "--parent-repo",
+        "${_PARENT_REPO}",
+        "--submodule-path",
+        "${_SUBMODULE_PATH}",
+        "--current-version",
+        "$$(cat new_version.txt)",
+        "--is-merge",
+        "${_IS_MERGE}",
+      ]
+    secretEnv: ["GITHUB_TOKEN"]
+    id: "update-submodule"
+    waitFor: ["create-release"]
 
 substitutions:
   _LOCATION: us-central1
+  _REPO_OWNER: ""
+  _PR_TYPE: "" # Populated by the PR label if it exists
+  _IS_MERGE: "false"
+  _PR_NUMBER: "" # PR number for reference
+  _PARENT_REPO: "portfolio" # Parent repository name
+  _SUBMODULE_PATH: "assets/scripts/github-ops-cli" # Path to submodule in parent repo
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
-# Grant access to Artifact Registry
 serviceAccount: "projects/$PROJECT_ID/serviceAccounts/cloud-builder@${PROJECT_ID}.iam.gserviceaccount.com"
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/github_token/versions/latest
+      env: "GITHUB_TOKEN"
