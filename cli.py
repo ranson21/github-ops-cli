@@ -105,6 +105,11 @@ def main():
     parser.add_argument("--version-type", help="Version bump type")
     parser.add_argument("--current-version", help="Current version")
     parser.add_argument("--is-draft", action="store_true", help="Create draft release")
+    parser.add_argument(
+        "--skip-asset",
+        action="store_true",
+        help="Skip creating and uploading release asset",
+    )
     parser.add_argument("--parent-repo", help="Parent repository name")
     parser.add_argument("--submodule-path", help="Submodule path")
     parser.add_argument(
@@ -205,7 +210,7 @@ def main():
             print("Warning: new_version.txt not found, using argument value")
             version = args.current_version
 
-        release_id = ops.create_release(version, args.is_draft)
+        release_id = ops.create_release(version, args.is_draft, args.skip_asset)
         print(f"Created release with ID: {release_id}")
 
     elif args.action == "update-submodule":
