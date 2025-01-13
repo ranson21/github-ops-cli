@@ -55,7 +55,7 @@ steps:
       - "${_REPO}"
       - "--parent-repo"
       - "${_PARENT_REPO}"
-      - "--submodule-path",
+      - "--submodule-path"
       - "${_SUBMODULE_PATH}"
       - "--current-version"
       - "$$(cat new_version.txt)"
