@@ -40,7 +40,7 @@ steps:
       - "BUILDER_TAG=$$(cat new_version.txt)"
     secretEnv: ["GITHUB_TOKEN"]
     id: "deploy"
-    waitFor: ["configure-docker"]
+    waitFor: ["bump-version"]
 
   # Create GitHub release
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
