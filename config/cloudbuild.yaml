@@ -50,19 +50,17 @@ steps:
   # Update parent repo submodule
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
     args:
-      [
-        "update-submodule",
-        "${_REPO_OWNER}",
-        "${_REPO}",
-        "--parent-repo",
-        "${_PARENT_REPO}",
-        "--submodule-path",
-        "${_SUBMODULE_PATH}",
-        "--current-version",
-        "$$(cat new_version.txt)",
-        "--is-merge",
-        "${_IS_MERGE}",
-      ]
+      - "update-submodule",
+      - "${_REPO_OWNER}",
+      - "${_REPO}",
+      - "--parent-repo",
+      - "${_PARENT_REPO}",
+      - "--submodule-path",
+      - "${_SUBMODULE_PATH}",
+      - "--current-version",
+      - "$$(cat new_version.txt)",
+      - "--is-merge",
+      - "${_IS_MERGE}",
     secretEnv: ["GITHUB_TOKEN"]
     id: "update-submodule"
     waitFor: ["create-release"]
@@ -71,7 +69,7 @@ substitutions:
   _LOCATION: us-central1
   _REPO_OWNER: ""
   _REPO: "github-ops-cli"
-  _PR_TYPE: "" # Populated by the PR label if it exists
+  _PR_TYPE: "timestamp" # Populated by the PR label if it exists
   _IS_MERGE: "false"
   _PR_NUMBER: "" # PR number for reference
   _PARENT_REPO: "portfolio" # Parent repository name
