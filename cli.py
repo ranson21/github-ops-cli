@@ -90,36 +90,106 @@ def get_pr_from_merge_commit(self, commit_sha: str) -> Optional[int]:
     return None
 
 
-def main():
+def create_parser():
+    """Create parser that handles both positional and named arguments"""
     parser = argparse.ArgumentParser(description="GitHub Operations CLI")
-    parser.add_argument(
-        "--action",
-        required=True,
-        choices=["get-version", "bump-version", "create-release", "update-submodule"],
-        help="Action to perform",
+
+    # Create parent parser for shared optional arguments
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument("-t", "--github-token", help="GitHub token")
+    parent_parser.add_argument(
+        "-p", "--pr-number", type=parse_pr_number, help="PR number"
     )
-    parser.add_argument("--github-token", help="GitHub token")
-    parser.add_argument("--repo-owner", required=True, help="Repository owner")
-    parser.add_argument("--repo-name", required=True, help="Repository name")
-    parser.add_argument("--pr-number", type=parse_pr_number, help="PR number")
-    parser.add_argument("--version-type", help="Version bump type")
-    parser.add_argument("--current-version", help="Current version")
-    parser.add_argument("--is-draft", action="store_true", help="Create draft release")
-    parser.add_argument(
+    parent_parser.add_argument("-v", "--version-type", help="Version bump type")
+    parent_parser.add_argument("-c", "--current-version", help="Current version")
+    parent_parser.add_argument(
+        "-d", "--is-draft", type=str2bool, default=False, help="Create draft release"
+    )
+    parent_parser.add_argument(
+        "-s",
         "--skip-asset",
         action="store_true",
         help="Skip creating and uploading release asset",
     )
-    parser.add_argument("--parent-repo", help="Parent repository name")
-    parser.add_argument("--submodule-path", help="Submodule path")
-    parser.add_argument(
+    parent_parser.add_argument("-r", "--parent-repo", help="Parent repository name")
+    parent_parser.add_argument("-m", "--submodule-path", help="Submodule path")
+    parent_parser.add_argument(
+        "-i",
         "--is-merge",
         type=str2bool,
         default=False,
         help="Whether this is a merge operation",
     )
 
-    args = parser.parse_args()
+    # Create mutually exclusive group for action specification
+    action_group = parser.add_mutually_exclusive_group(required=True)
+
+    # Add positional action argument
+    action_group.add_argument(
+        "action",
+        nargs="?",
+        choices=["get-version", "bump-version", "create-release", "update-submodule"],
+        help="Action to perform (positional)",
+    )
+    # Add named action argument
+    action_group.add_argument(
+        "-a",
+        "--action",
+        dest="named_action",
+        choices=["get-version", "bump-version", "create-release", "update-submodule"],
+        help="Action to perform (named)",
+    )
+
+    # Create mutually exclusive groups for repo owner and name
+    owner_group = parser.add_mutually_exclusive_group(required=True)
+    owner_group.add_argument(
+        "repo_owner", nargs="?", help="Repository owner (positional)"
+    )
+    owner_group.add_argument(
+        "-o", "--repo-owner", dest="named_owner", help="Repository owner (named)"
+    )
+
+    name_group = parser.add_mutually_exclusive_group(required=True)
+    name_group.add_argument("repo_name", nargs="?", help="Repository name (positional)")
+    name_group.add_argument(
+        "-n", "--repo-name", dest="named_name", help="Repository name (named)"
+    )
+
+    # Add all optional arguments
+    for action in parent_parser._actions:
+        parser._add_action(action)
+
+    return parser
+
+
+def parse_args(args=None):
+    """Parse args supporting both styles"""
+    parser = create_parser()
+
+    # If no args provided, use sys.argv[1:]
+    if args is None:
+        import sys
+
+        args = sys.argv[1:]
+
+    # Parse arguments
+    parsed_args = parser.parse_args(args)
+
+    # Consolidate named and positional arguments
+    parsed_args.action = parsed_args.action or parsed_args.named_action
+    parsed_args.repo_owner = parsed_args.repo_owner or parsed_args.named_owner
+    parsed_args.repo_name = parsed_args.repo_name or parsed_args.named_name
+
+    # Clean up namespace
+    del parsed_args.named_action
+    del parsed_args.named_owner
+    del parsed_args.named_name
+
+    return parsed_args
+
+
+def main():
+    args = parse_args()
 
     # Get token from args or environment
     github_token = args.github_token or os.environ.get("GITHUB_TOKEN")

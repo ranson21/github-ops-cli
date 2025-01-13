@@ -52,9 +52,9 @@ test-get-version:
 	@docker run --rm \
 		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
 		$(BUILDER_IMAGE_LATEST) \
-		--action get-version \
-		--repo-owner $(TEST_REPO_OWNER) \
-		--repo-name $(TEST_REPO_NAME)
+		get-version \
+		$(TEST_REPO_OWNER) \
+		$(TEST_REPO_NAME)
 
 # Push image(s)
 .PHONY: push
