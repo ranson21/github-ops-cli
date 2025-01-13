@@ -64,29 +64,15 @@ steps:
 
   # Create GitHub release
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
-    entrypoint: "bash"
     args:
-      - "-c"
-      - |
-        echo "Content of new_version.txt: $(cat new_version.txt)"
-        VERSION=$(cat new_version.txt)
-        if [[ "${_IS_MERGE}" != "true" ]]; then
-          python /usr/local/bin/cli.py \
-            --action create-release \
-            --repo-owner ${_REPO_OWNER} \
-            --repo-name github-ops-cli \
-            --current-version "$${VERSION}" \
-            --is-prod ${_IS_MERGE} \
-            --skip-asset
-        else
-          python /usr/local/bin/cli.py \
-            --action create-release \
-            --repo-owner ${_REPO_OWNER} \
-            --repo-name github-ops-cli \
-            --current-version "$${VERSION}" \
-            --is-prod "true" \
-            --skip-asset
-        fi
+      - "create-release"
+      - "${_REPO_OWNER}"
+      - "${_REPO}"
+      - "--current-version"
+      - "$$(cat new_version.txt)"
+      - "--is-prod"
+      - "${_IS_MERGE}"
+      - "--skip-asset"
     secretEnv: ["GITHUB_TOKEN"]
     waitFor: ["deploy"]
     id: "create-release"
@@ -100,7 +86,7 @@ steps:
         "--repo-owner",
         "${_REPO_OWNER}",
         "--repo-name",
-        "github-ops-cli",
+        "${_REPO}",
         "--parent-repo",
         "${_PARENT_REPO}",
         "--submodule-path",
@@ -117,6 +103,7 @@ steps:
 substitutions:
   _LOCATION: us-central1
   _REPO_OWNER: ""
+  _REPO: "github-ops-cli"
   _PR_TYPE: "" # Populated by the PR label if it exists
   _IS_MERGE: "false"
   _PR_NUMBER: "" # PR number for reference
