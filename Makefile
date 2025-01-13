@@ -52,9 +52,51 @@ test-get-version:
 	@docker run --rm \
 		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
 		$(BUILDER_IMAGE_LATEST) \
-		--action get-version \
-		--repo-owner $(TEST_REPO_OWNER) \
-		--repo-name $(TEST_REPO_NAME)
+		get-version \
+		$(TEST_REPO_OWNER) \
+		$(TEST_REPO_NAME)
+
+.PHONY: test-bump-version
+test-bump-version:
+	@echo "Testing bump-version command..."
+	@docker run --rm \
+		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
+		$(BUILDER_IMAGE_LATEST) \
+		bump-version \
+		$(TEST_REPO_OWNER) \
+		$(TEST_REPO_NAME) \
+		--current-version 1.0.0 \
+		--version-type patch
+
+.PHONY: test-create-release
+test-create-release:
+	@echo "Testing create-release command..."
+	@docker run --rm \
+		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
+		$(BUILDER_IMAGE_LATEST) \
+		create-release \
+		$(TEST_REPO_OWNER) \
+		$(TEST_REPO_NAME) \
+		--current-version 1.0.1 \
+		--is-draft true
+
+.PHONY: test-update-submodule
+test-update-submodule:
+	@echo "Testing update-submodule command..."
+	@docker run --rm \
+		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
+		$(BUILDER_IMAGE_LATEST) \
+		update-submodule \
+		$(TEST_REPO_OWNER) \
+		$(TEST_REPO_NAME) \
+		--current-version 1.0.1 \
+		--parent-repo $(TEST_PARENT_REPO) \
+		--submodule-path $(TEST_SUBMODULE_PATH) \
+		--is-merge true
+
+.PHONY: test-all-actions
+test-all-actions: test-get-version test-bump-version test-create-release test-update-submodule
+	@echo "All action tests completed successfully"
 
 # Push image(s)
 .PHONY: push
