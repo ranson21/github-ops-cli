@@ -32,20 +32,12 @@ steps:
     id: "bump-version"
     waitFor: ["get-version"]
 
-  # Configure Docker credentials
-  - name: "gcr.io/cloud-builders/gcloud"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        gcloud auth configure-docker ${_LOCATION}-docker.pkg.dev
-    id: "configure-docker"
-    waitFor: ["bump-version"]
-
   # Deploy the docker image
   - name: us-central1-docker.pkg.dev/${PROJECT_ID}/docker/dev-tools-builder-packer
     entrypoint: "make"
-    args: ["deploy", "BUILDER_TAG=$$(cat new_version.txt)"]
+    args: ["deploy"]
+    env:
+      - "BUILDER_TAG=$$(cat new_version.txt)"
     secretEnv: ["GITHUB_TOKEN"]
     id: "deploy"
     waitFor: ["configure-docker"]
