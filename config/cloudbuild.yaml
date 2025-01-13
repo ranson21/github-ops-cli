@@ -1,15 +1,7 @@
 steps:
   # Get latest version
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
-    args:
-      [
-        "--action",
-        "get-version",
-        "--repo-owner",
-        "${_REPO_OWNER}",
-        "--repo-name",
-        "github-ops-cli",
-      ]
+    args: ["get-version", "${_REPO_OWNER}", "github-ops-cli"]
     secretEnv: ["GITHUB_TOKEN"]
     id: "get-version"
 
@@ -84,7 +76,7 @@ steps:
             --repo-owner ${_REPO_OWNER} \
             --repo-name github-ops-cli \
             --current-version "$${VERSION}" \
-            --is-draft \
+            --is-prod ${_IS_MERGE} \
             --skip-asset
         else
           python /usr/local/bin/cli.py \
@@ -92,6 +84,7 @@ steps:
             --repo-owner ${_REPO_OWNER} \
             --repo-name github-ops-cli \
             --current-version "$${VERSION}" \
+            --is-prod "true" \
             --skip-asset
         fi
     secretEnv: ["GITHUB_TOKEN"]
