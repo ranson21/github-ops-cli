@@ -45,7 +45,7 @@ steps:
   # Deploy the docker image
   - name: us-central1-docker.pkg.dev/${PROJECT_ID}/docker/dev-tools-builder-packer
     entrypoint: "make"
-    args: ["deploy", "BUILDER_TAG=$(cat new_version.txt || echo latest)"]
+    args: ["deploy", "BUILDER_TAG=$$(cat new_version.txt)"]
     secretEnv: ["GITHUB_TOKEN"]
     id: "deploy"
     waitFor: ["configure-docker"]
