@@ -102,9 +102,20 @@ def create_parser():
     )
     parent_parser.add_argument("-v", "--version-type", help="Version bump type")
     parent_parser.add_argument("-c", "--current-version", help="Current version")
-    parent_parser.add_argument(
-        "-d", "--is-draft", type=str2bool, default=False, help="Create draft release"
+
+    # Add mutually exclusive group for release type
+    release_type = parent_parser.add_mutually_exclusive_group()
+    release_type.add_argument(
+        "-d", "--is-draft", type=str2bool, default=None, help="Create draft release"
     )
+    release_type.add_argument(
+        "-r",
+        "--is-prod",
+        type=str2bool,
+        default=None,
+        help="Create production (non-draft) release",
+    )
+
     parent_parser.add_argument(
         "-s",
         "--skip-asset",
@@ -280,7 +291,14 @@ def main():
             print("Warning: new_version.txt not found, using argument value")
             version = args.current_version
 
-        release_id = ops.create_release(version, args.is_draft, args.skip_asset)
+        # Determine draft status
+        is_draft = True  # Default to draft
+        if args.is_draft is not None:
+            is_draft = args.is_draft
+        elif args.is_prod is not None:
+            is_draft = not args.is_prod
+
+        release_id = ops.create_release(version, is_draft, args.skip_asset)
         print(f"Created release with ID: {release_id}")
 
     elif args.action == "update-submodule":
