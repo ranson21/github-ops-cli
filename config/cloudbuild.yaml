@@ -7,30 +7,20 @@ steps:
 
   # Process PR info and bump version
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
-    entrypoint: "bash"
     args:
-      - "-c"
-      - |
-        echo "Debug environment variables:"
-        echo "PR_TYPE value: ${_PR_TYPE}"
-        echo "IS_MERGE value: ${_IS_MERGE}"
-
-        VERSION_TYPE="${_PR_TYPE}"
-        if [ -z "${_PR_TYPE}" ]; then
-          VERSION_TYPE="timestamp"
-        fi
-
-        python /usr/local/bin/cli.py \
-          --action bump-version \
-          --repo-owner ${_REPO_OWNER} \
-          --repo-name github-ops-cli \
-          --current-version "$$(cat current_version.txt)" \
-          --version-type "$${VERSION_TYPE}" \
-          --is-merge "${_IS_MERGE}" \
-          --pr-number "${_PR_NUMBER}"
+      - "bump-version"
+      - "${_REPO_OWNER}"
+      - "${_REPO}"
+      - "--current-version"
+      - "$$(cat current_version.txt)"
+      - "--version-type"
+      - "${_PR_TYPE}"
+      - "--is-merge"
+      - "${_IS_MERGE}"
+      - "--pr-number"
+      - "${_PR_NUMBER}"
     secretEnv: ["GITHUB_TOKEN"]
     id: "bump-version"
-    waitFor: ["get-version"]
 
   # Deploy the docker image
   - name: us-central1-docker.pkg.dev/${PROJECT_ID}/docker/dev-tools-builder-packer
@@ -61,11 +51,8 @@ steps:
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
     args:
       [
-        "--action",
         "update-submodule",
-        "--repo-owner",
         "${_REPO_OWNER}",
-        "--repo-name",
         "${_REPO}",
         "--parent-repo",
         "${_PARENT_REPO}",
