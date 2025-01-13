@@ -109,7 +109,7 @@ def create_parser():
         "-d", "--is-draft", type=str2bool, default=None, help="Create draft release"
     )
     release_type.add_argument(
-        "-r",
+        "-f",
         "--is-prod",
         type=str2bool,
         default=None,
