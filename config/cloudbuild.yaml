@@ -40,26 +40,14 @@ steps:
       - |
         gcloud auth configure-docker ${_LOCATION}-docker.pkg.dev
     id: "configure-docker"
-    waitFor:
-      ["bump-version"]
+    waitFor: ["bump-version"]
 
-      # Run make deploy with new version
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        # Install Docker
-        apt-get update && apt-get install -y docker.io
-        # Set default version if file doesn't exist
-        export BUILDER_TAG="$$(cat new_version.txt 2>/dev/null || echo latest)"
-        # Run make deploy
-        make deploy
+  # Deploy the docker image
+  - name: us-central1-docker.pkg.dev/${PROJECT_ID}/docker/dev-tools-builder-packer
+    entrypoint: "make"
+    args: ["deploy", "BUILDER_TAG=$(cat new_version.txt || echo latest)"]
     secretEnv: ["GITHUB_TOKEN"]
-    env:
-      - "PROJECT_ID=$PROJECT_ID"
-      - "LOCATION=${_LOCATION}"
-    id: "deploy"
+    id: "build"
     waitFor: ["configure-docker"]
 
   # Create GitHub release
