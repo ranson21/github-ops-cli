@@ -50,17 +50,17 @@ steps:
   # Update parent repo submodule
   - name: "us-central1-docker.pkg.dev/${PROJECT_ID}/docker/github-ops-builder"
     args:
-      - "update-submodule",
-      - "${_REPO_OWNER}",
-      - "${_REPO}",
-      - "--parent-repo",
-      - "${_PARENT_REPO}",
+      - "update-submodule"
+      - "${_REPO_OWNER}"
+      - "${_REPO}"
+      - "--parent-repo"
+      - "${_PARENT_REPO}"
       - "--submodule-path",
-      - "${_SUBMODULE_PATH}",
-      - "--current-version",
-      - "$$(cat new_version.txt)",
-      - "--is-merge",
-      - "${_IS_MERGE}",
+      - "${_SUBMODULE_PATH}"
+      - "--current-version"
+      - "$$(cat new_version.txt)"
+      - "--is-merge"
+      - "${_IS_MERGE}"
     secretEnv: ["GITHUB_TOKEN"]
     id: "update-submodule"
     waitFor: ["create-release"]
