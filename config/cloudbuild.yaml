@@ -84,6 +84,7 @@ steps:
             --repo-owner ${_REPO_OWNER} \
             --repo-name github-ops-cli \
             --current-version "$${VERSION}" \
+            --is-prod "true" \
             --skip-asset
         fi
     secretEnv: ["GITHUB_TOKEN"]
