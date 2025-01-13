@@ -47,7 +47,7 @@ steps:
     entrypoint: "make"
     args: ["deploy", "BUILDER_TAG=$(cat new_version.txt || echo latest)"]
     secretEnv: ["GITHUB_TOKEN"]
-    id: "build"
+    id: "deploy"
     waitFor: ["configure-docker"]
 
   # Create GitHub release
