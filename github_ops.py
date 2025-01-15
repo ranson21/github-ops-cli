@@ -327,6 +327,19 @@ class GitHubOps:
         response.raise_for_status()
         pr_number = response.json()["number"]
 
+        # Add semver:patch label to the PR
+        labels_url = f"{self.api_base}/repos/{self.repo_owner}/{parent_repo}/issues/{pr_number}/labels"
+        labels_data = {"labels": ["semver:patch"]}
+        label_response = requests.post(
+            labels_url, headers=self.headers, json=labels_data
+        )
+        if label_response.status_code == 200:
+            print(f"Successfully added semver:patch label to PR #{pr_number}")
+        else:
+            print(f"Failed to add label to PR #{pr_number}")
+            print(f"Status code: {label_response.status_code}")
+            print(f"Response: {label_response.text}")
+
         # Auto-merge the PR
         merge_url = f"{self.api_base}/repos/{self.repo_owner}/{parent_repo}/pulls/{pr_number}/merge"
         merge_data = {
